@@ -1,6 +1,6 @@
 ## pcluster
 
-A partial clusterer for Mapper.
+A partial clustering wrapper for Mapper.
 
 
 
