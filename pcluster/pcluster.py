@@ -24,6 +24,8 @@ class PartialCluster(BaseEstimator, ClusterMixin):
     def __init__(self,
             clusterer=None,
             min_samples=None,
+            metric=None,
+            metric_params=None,
             random_state=None,
             verbose=1,
         ):
@@ -33,6 +35,10 @@ class PartialCluster(BaseEstimator, ClusterMixin):
         
         # over-ride min_samples if defined by clusterer
         self.min_samples = min_samples or self.clusterer_params.get('min_samples', 1) 
+
+        # metric
+        self.metric = metric or self.clusterer_params.get('metric', 'euclidean') 
+        self.metric_params = metric_params or self.clusterer_params.get('metric_params', {})
 
         # other parameters
         self.random_state = None
@@ -77,7 +83,7 @@ class PartialCluster(BaseEstimator, ClusterMixin):
             print("*** cluster_centers_ has shape:", self.clusterer.cluster_centers_.shape)
             
             # setup BallTree using cluster centers
-            self._knn = BallTree(self.clusterer.cluster_centers_, metric='euclidean', leaf_size=2)
+            self._knn = BallTree(self.clusterer.cluster_centers_, metric=self.metric, **self.metric_params)
 
         else:
             # print some info
@@ -85,7 +91,7 @@ class PartialCluster(BaseEstimator, ClusterMixin):
             print("*** X has shape:", X.shape)
             
             # use X if cluster_centers not available
-            self._knn = BallTree(X, metric='euclidean', leaf_size=2)
+            self._knn = BallTree(X, metric=self.metric, **self.metric_params)
 
         return self
 
@@ -204,9 +210,14 @@ class PartialCluster(BaseEstimator, ClusterMixin):
 
 
 class SupervisedPartialCluster(BaseEstimator, ClusterMixin):
-    def __init__(self, k=1, min_samples=1):
+    def __init__(self, k=1, min_samples=1, metric=None, metric_params=None):
         self.k = k
         self.min_samples = min_samples
+
+        # metric
+        self.metric = metric or 'euclidean'
+        self.metric_params = metric_params or {}
+
 
     def precompute_fit(self, X, y=None):
         """Precompute a clustering on X. If called before fit, the cluster
@@ -235,7 +246,7 @@ class SupervisedPartialCluster(BaseEstimator, ClusterMixin):
             self.precomputed_labels_ = y
 
         # use X if cluster_centers not available
-        self._knn = BallTree(X, metric='euclidean', leaf_size=2)
+        self._knn = BallTree(X, metric=self.metric, **self.metric_params)
 
         return self
 
@@ -272,7 +283,7 @@ class SupervisedPartialCluster(BaseEstimator, ClusterMixin):
                 self.labels_ = y
 
             # setup knn
-            self._knn = BallTree(X, metric='euclidean', leaf_size=2)
+            self._knn = BallTree(X, metric=self.metric, **self.metric_params)
 
         # return instance
         return self
